@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	authCheck "github.com/K1tten2005/avito_pvz/internal/middleware/auth_check"
 	"github.com/K1tten2005/avito_pvz/internal/middleware/cors"
 	"github.com/K1tten2005/avito_pvz/internal/middleware/csp"
 	"github.com/K1tten2005/avito_pvz/internal/middleware/logger"
@@ -18,10 +19,11 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 
 	authHandler "github.com/K1tten2005/avito_pvz/internal/pkg/auth/delivery/http"
-	authUsecase "github.com/K1tten2005/avito_pvz/internal/pkg/auth/usecase"
 	authRepo "github.com/K1tten2005/avito_pvz/internal/pkg/auth/repo"
-
-
+	authUsecase "github.com/K1tten2005/avito_pvz/internal/pkg/auth/usecase"
+	pvzHandler "github.com/K1tten2005/avito_pvz/internal/pkg/pvz/delivery/http"
+	pvzRepo "github.com/K1tten2005/avito_pvz/internal/pkg/pvz/repo"
+	pvzUsecase "github.com/K1tten2005/avito_pvz/internal/pkg/pvz/usecase"
 )
 
 func initDB(logger *slog.Logger) (*pgxpool.Pool, error) {
@@ -29,11 +31,13 @@ func initDB(logger *slog.Logger) (*pgxpool.Pool, error) {
 
 	pool, err := pgxpool.Connect(context.Background(), connStr)
 	if err != nil {
+		logger.Error(err.Error())
 		return nil, err
 	}
 
 	err = pool.Ping(context.Background())
 	if err != nil {
+		logger.Error(err.Error())
 		return nil, err
 	}
 
@@ -51,9 +55,12 @@ func main() {
 
 	loggerVar := slog.New(slog.NewJSONHandler(io.MultiWriter(logFile, os.Stdout), &slog.HandlerOptions{Level: slog.LevelInfo}))
 
+	// acl.InitACL(loggerVar)
+
 	pool, err := initDB(loggerVar)
 	if err != nil {
 		loggerVar.Error("Ошибка при подключении к PostgreSQL: " + err.Error())
+		return
 	}
 	defer pool.Close()
 
@@ -63,19 +70,40 @@ func main() {
 	authUsecase := authUsecase.CreateAuthUsecase(authRepo)
 	authHandler := authHandler.CreateAuthHandler(authUsecase)
 
-	r := mux.NewRouter().PathPrefix("/").Subrouter()
+	pvzRepo := pvzRepo.CreatePvzRepo(pool)
+	pvzUsecase := pvzUsecase.CreatePvzUsecase(pvzRepo)
+	pvzHandler := pvzHandler.CreatePvzHandler(pvzUsecase)
+
+	r := mux.NewRouter()
+
 	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Не найдено", http.StatusNotFound)
 	})
-
 	r.Use(
 		logMW,
 		cors.CorsMiddleware,
-		csp.CspMiddleware)
+		csp.CspMiddleware,
+	)
 
-	r.HandleFunc("/login", authHandler.Login).Methods(http.MethodPost)
-	r.HandleFunc("/register", authHandler.Register).Methods(http.MethodPost)
-	r.HandleFunc("/dummyLogin", authHandler.DummyLogin).Methods(http.MethodPost)
+	// Публичные маршруты
+	publicRoutes := r.PathPrefix("/").Subrouter()
+
+	publicRoutes.HandleFunc("/login", authHandler.Login).Methods(http.MethodPost)
+	publicRoutes.HandleFunc("/register", authHandler.Register).Methods(http.MethodPost)
+	publicRoutes.HandleFunc("/dummyLogin", authHandler.DummyLogin).Methods(http.MethodPost)
+
+	// Защищенные маршруты
+	protectedRoutes := r.NewRoute().Subrouter()
+	protectedRoutes.Use(
+		logMW,
+		cors.CorsMiddleware,
+		csp.CspMiddleware,
+		authCheck.AuthMiddleware,
+		//acl.ACLMiddleware, // Оставим отключенным пока
+	)
+
+	protectedRoutes.HandleFunc("/pvz", pvzHandler.CreatePvz).Methods(http.MethodPost)
+	protectedRoutes.HandleFunc("/pvz", pvzHandler.GetPvz).Methods(http.MethodGet)
 
 	srv := http.Server{
 		Handler:           r,

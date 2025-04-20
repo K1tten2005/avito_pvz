@@ -46,6 +46,29 @@ func easyjson232327a2DecodeGithubComK1tten2005AvitoPvzInternalModels(in *jlexer.
 			}
 		case "city":
 			out.City = string(in.String())
+		case "receptions":
+			if in.IsNull() {
+				in.Skip()
+				out.Receptions = nil
+			} else {
+				in.Delim('[')
+				if out.Receptions == nil {
+					if !in.IsDelim(']') {
+						out.Receptions = make([]Reception, 0, 0)
+					} else {
+						out.Receptions = []Reception{}
+					}
+				} else {
+					out.Receptions = (out.Receptions)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v1 Reception
+					(v1).UnmarshalEasyJSON(in)
+					out.Receptions = append(out.Receptions, v1)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -74,6 +97,22 @@ func easyjson232327a2EncodeGithubComK1tten2005AvitoPvzInternalModels(out *jwrite
 		const prefix string = ",\"city\":"
 		out.RawString(prefix)
 		out.String(string(in.City))
+	}
+	{
+		const prefix string = ",\"receptions\":"
+		out.RawString(prefix)
+		if in.Receptions == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v2, v3 := range in.Receptions {
+				if v2 > 0 {
+					out.RawByte(',')
+				}
+				(v3).MarshalEasyJSON(out)
+			}
+			out.RawByte(']')
+		}
 	}
 	out.RawByte('}')
 }

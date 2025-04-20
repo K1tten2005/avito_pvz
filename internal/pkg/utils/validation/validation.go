@@ -16,6 +16,21 @@ const (
 	maxPassLength  = 25
 )
 
+var AllowedCities = []string{
+	"Москва",
+	"Санкт Петербург",
+	"Казань",
+}
+
+func IsValidCity(city string) bool {
+	for _, val := range AllowedCities {
+		if city == val {
+			return true
+		}
+	}
+	return false
+}
+
 func IsValidRole(role string) bool {
 	return role == models.RoleEmployee || role == models.RoleModerator
 }

@@ -39,11 +39,11 @@ func (h *AuthHandler) DummyLogin(w http.ResponseWriter, r *http.Request) {
 	req.Sanitize()
 
 	if !validation.IsValidRole(req.Role) {
-		logger.LogHandlerError(loggerVar, errors.New("невалидная роль"), http.StatusBadRequest)
-		send_err.SendError(w, "невалидная роль", http.StatusBadRequest)
+		logger.LogHandlerError(loggerVar, errors.New("не валидная роль"), http.StatusBadRequest)
+		send_err.SendError(w, "не валидная роль", http.StatusBadRequest)
 	}
 
-	token, csrfToken, err := h.uc.DummyLogin(r.Context(), req)
+	token, err := h.uc.DummyLogin(r.Context(), req)
 
 	if err != nil {
 		switch err {
@@ -66,21 +66,8 @@ func (h *AuthHandler) DummyLogin(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 	})
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "CSRF-Token",
-		Value:    csrfToken,
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: false,
-		Secure:   false,
-		SameSite: http.SameSiteStrictMode,
-		Path:     "/",
-	})
-
-	w.Header().Set("X-CSRF-Token", csrfToken)
 	w.Header().Set("Content-Type", "application/json")
-
 	logger.LogHandlerInfo(loggerVar, "Successful", http.StatusOK)
-
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -94,19 +81,16 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	req.Sanitize()
 
-	user, token, csrfToken, err := h.uc.Login(r.Context(), req)
+	user, token, err := h.uc.Login(r.Context(), req)
 
 	if err != nil {
 		switch err {
-		case auth.ErrInvalidEmail, auth.ErrUserNotFound:
+		case auth.ErrInvalidEmail, auth.ErrUserNotFound, auth.ErrInvalidCredentials:
 			logger.LogHandlerError(loggerVar, err, http.StatusBadRequest)
 			send_err.SendError(w, err.Error(), http.StatusBadRequest)
-		case auth.ErrInvalidCredentials:
-			logger.LogHandlerError(loggerVar, err, http.StatusUnauthorized)
-			send_err.SendError(w, err.Error(), http.StatusUnauthorized)
 		default:
 			logger.LogHandlerError(loggerVar, fmt.Errorf("неизвестная ошибка: %w", err), http.StatusInternalServerError)
-			send_err.SendError(w, "неизвестная ошибка", http.StatusInternalServerError)
+			send_err.SendError(w, "неизвестная ошибка", http.StatusBadRequest)
 		}
 		return
 	}
@@ -120,17 +104,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 	})
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "CSRF-Token",
-		Value:    csrfToken,
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: false,
-		Secure:   false,
-		SameSite: http.SameSiteStrictMode,
-		Path:     "/",
-	})
-
-	w.Header().Set("X-CSRF-Token", csrfToken)
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(user); err != nil {
@@ -157,7 +130,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		send_err.SendError(w, "невалидная роль", http.StatusBadRequest)
 	}
 
-	user, token, csrfToken, err := h.uc.Register(r.Context(), req)
+	user, token, err := h.uc.Register(r.Context(), req)
 
 	if err != nil {
 		switch err {
@@ -180,17 +153,6 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 	})
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "CSRF-Token",
-		Value:    csrfToken,
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: false,
-		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
-		Path:     "/",
-	})
-
-	w.Header().Set("X-CSRF-Token", csrfToken)
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(user); err != nil {

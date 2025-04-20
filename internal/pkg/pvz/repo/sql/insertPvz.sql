@@ -1,0 +1,1 @@
+INSERT INTO pvz (id, registration_date, city) VALUES ($1, $2, $3)

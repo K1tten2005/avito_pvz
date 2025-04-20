@@ -26,7 +26,7 @@ type AuthRepo interface {
 }
 
 type AuthUsecase interface {
-	Login(ctx context.Context, data models.LoginReq) (models.User, string, string, error)
-	Register(ctx context.Context, data models.RegisterReq) (models.User, string, string, error)
-	DummyLogin(ctx context.Context, data models.DummyLoginReq) (string, string, error)
+	Login(ctx context.Context, data models.LoginReq) (models.User, string, error)
+	Register(ctx context.Context, data models.RegisterReq) (models.User, string, error)
+	DummyLogin(ctx context.Context, data models.DummyLoginReq) (string, error)
 }

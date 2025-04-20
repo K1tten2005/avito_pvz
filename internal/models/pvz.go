@@ -9,9 +9,10 @@ import (
 
 // easyjson:json
 type PVZ struct {
-	Id               uuid.UUID `json:"id"`
-	RegistrationDate time.Time `json:"registration_date"`
-	City             string    `json:"city"`
+	Id               uuid.UUID   `json:"id"`
+	RegistrationDate time.Time   `json:"registration_date"`
+	City             string      `json:"city"`
+	Receptions       []Reception `json:"receptions"`
 }
 
 func (p *PVZ) Sanitize() {

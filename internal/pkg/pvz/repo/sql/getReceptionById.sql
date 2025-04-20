@@ -1,0 +1,1 @@
+SELECT id, reception_time, pvz_id, status FROM reception WHERE id=$1
