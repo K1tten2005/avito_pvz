@@ -11,13 +11,14 @@ import (
 
 type ctxKey string
 
-const loggerKey ctxKey = "logger"
+const LoggerKey ctxKey = "logger"
 
 func CreateLoggerMiddleware(loggerVar *slog.Logger) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), loggerKey, loggerVar.With(slog.String("ID", uuid.NewV4().String())))
+			ctx := context.WithValue(r.Context(), LoggerKey, loggerVar.With(slog.String("ID", uuid.NewV4().String())))
 			r = r.WithContext(ctx)
+			loggerVar.Info("Logger added to context", "context", ctx) // Добавь логи
 			next.ServeHTTP(w, r)
 		})
 	}

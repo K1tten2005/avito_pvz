@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	authCheck "github.com/K1tten2005/avito_pvz/internal/middleware/auth_check"
+	"github.com/K1tten2005/avito_pvz/internal/middleware/acl"
 	"github.com/K1tten2005/avito_pvz/internal/middleware/cors"
 	"github.com/K1tten2005/avito_pvz/internal/middleware/csp"
 	"github.com/K1tten2005/avito_pvz/internal/middleware/logger"
@@ -55,7 +55,7 @@ func main() {
 
 	loggerVar := slog.New(slog.NewJSONHandler(io.MultiWriter(logFile, os.Stdout), &slog.HandlerOptions{Level: slog.LevelInfo}))
 
-	// acl.InitACL(loggerVar)
+	acl.InitACL(loggerVar)
 
 	pool, err := initDB(loggerVar)
 	if err != nil {
@@ -95,11 +95,7 @@ func main() {
 	// Защищенные маршруты
 	protectedRoutes := r.NewRoute().Subrouter()
 	protectedRoutes.Use(
-		logMW,
-		cors.CorsMiddleware,
-		csp.CspMiddleware,
-		authCheck.AuthMiddleware,
-		//acl.ACLMiddleware, // Оставим отключенным пока
+		acl.ACLMiddleware,
 	)
 
 	protectedRoutes.HandleFunc("/pvz", pvzHandler.CreatePvz).Methods(http.MethodPost)

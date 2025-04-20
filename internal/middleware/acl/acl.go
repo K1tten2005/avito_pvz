@@ -16,8 +16,8 @@ import (
 var Enforcer *casbin.Enforcer
 
 func InitACL(logger *slog.Logger) error {
-	modelPath := "./model.conf"
-	policyPath := "./policy.csv"
+	modelPath := "internal/middleware/acl/model.conf"
+	policyPath := "internal/middleware/acl/policy.csv"
 
 	e, err := casbin.NewEnforcer(modelPath, policyPath)
 	if err != nil {
