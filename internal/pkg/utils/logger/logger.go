@@ -43,6 +43,5 @@ func GetLoggerFromContext(ctx context.Context) *slog.Logger {
 		return logger
 	}
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
-
 	return logger
 }

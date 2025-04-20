@@ -18,7 +18,6 @@ func CreateLoggerMiddleware(loggerVar *slog.Logger) mux.MiddlewareFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := context.WithValue(r.Context(), LoggerKey, loggerVar.With(slog.String("ID", uuid.NewV4().String())))
 			r = r.WithContext(ctx)
-			loggerVar.Info("Logger added to context", "context", ctx) // Добавь логи
 			next.ServeHTTP(w, r)
 		})
 	}
