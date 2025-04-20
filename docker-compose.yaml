@@ -1,0 +1,46 @@
+services:
+  main:
+    build:
+      context: .
+      dockerfile: ./build/main.Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      POSTGRES_CONNECTION: ${POSTGRES_CONNECTION}
+      JWT_SECRET: ${JWT_SECRET}
+      MAIN_LOG_FILE: ${MAIN_LOG_FILE}
+    volumes:
+      - ./logs:/var/log/
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - avito_pvz-network
+
+  postgres:
+    env_file:
+      - .env
+    container_name: postgres
+    image: postgres:15.0
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - avito_pvz-network
+    volumes:
+      - ./build/sql/create_tables.sql:/docker-entrypoint-initdb.d/initdb.sql
+      - avito_pvz-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+
+volumes:
+  avito_pvz-db-data:
+
+networks:
+  avito_pvz-network:
+    driver: bridge

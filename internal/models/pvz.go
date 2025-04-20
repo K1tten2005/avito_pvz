@@ -7,6 +7,7 @@ import (
 	"github.com/satori/uuid"
 )
 
+// easyjson:json
 type PVZ struct {
 	Id               uuid.UUID `json:"id"`
 	RegistrationDate time.Time `json:"registration_date"`
