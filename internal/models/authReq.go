@@ -28,6 +28,7 @@ func (s *LoginReq) Sanitize() {
 func (s *RegisterReq) Sanitize() {
 	s.Email = html.EscapeString(s.Email)
 	s.Password = html.EscapeString(s.Password)
+	s.Role = html.EscapeString(s.Role)
 }
 
 func (s *DummyLoginReq) Sanitize() {

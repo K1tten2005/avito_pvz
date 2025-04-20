@@ -152,6 +152,11 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	req.Sanitize()
 
+	if !validation.IsValidRole(req.Role) {
+		logger.LogHandlerError(loggerVar, errors.New("невалидная роль"), http.StatusBadRequest)
+		send_err.SendError(w, "невалидная роль", http.StatusBadRequest)
+	}
+
 	user, token, csrfToken, err := h.uc.Register(r.Context(), req)
 
 	if err != nil {

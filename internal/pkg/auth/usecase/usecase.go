@@ -95,7 +95,7 @@ func (uc *AuthUsecase) Register(ctx context.Context, data models.RegisterReq) (m
 	newUser := models.User{
 		Id:           uuid.NewV4(),
 		Email:        data.Email,
-		Role:         models.RoleEmployee,
+		Role:         data.Role,
 		PasswordHash: hashedPassword,
 	}
 
