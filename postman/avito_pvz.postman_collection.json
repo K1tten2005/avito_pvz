@@ -1,0 +1,162 @@
+{
+	"info": {
+		"_postman_id": "747477c3-ded0-476a-9a6d-fe1814a46370",
+		"name": "avito_pvz",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "39034495",
+		"_collection_link": "https://avitopvz.postman.co/workspace/avito_pvz~0a83d592-fa4c-4189-b808-5618b616d0fe/collection/39034495-747477c3-ded0-476a-9a6d-fe1814a46370?action=share&source=collection_link&creator=39034495"
+	},
+	"item": [
+		{
+			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"email\": \"nick@mail.ru\",\n\"password\": \"Pass@123\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/login"
+			},
+			"response": []
+		},
+		{
+			"name": "register",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"email\": \"nick@mail.ru\",\n\"password\": \"Pass@123\",\n\"role\": \"employee\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/register"
+			},
+			"response": []
+		},
+		{
+			"name": "dummyLogin",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"role\": \"employee\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/dummyLogin"
+			},
+			"response": []
+		},
+		{
+			"name": "pvz",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": \"1103cd66-b770-4b00-882f-9cffcc577372\",\n  \"registrationDate\": \"2025-04-20T14:11:08.600Z\",\n  \"city\": \"Москва\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/pvz"
+			},
+			"response": []
+		},
+		{
+			"name": "pvz",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/pvz?limit=3",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"pvz"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "3"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "receptions",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"pvzId\": \"1103cd66-b770-4b00-882f-9cffcc577371\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/receptions"
+			},
+			"response": []
+		},
+		{
+			"name": "products",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"type\": \"одежда\",\n  \"pvzId\": \"1103cd66-b770-4b00-882f-9cffcc577371\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/products"
+			},
+			"response": []
+		},
+		{
+			"name": "delete_last_product",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": "http://localhost:8080/pvz/1103cd66-b770-4b00-882f-9cffcc577375/delete_last_product"
+			},
+			"response": []
+		},
+		{
+			"name": "close_last_reception",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": "http://localhost:8080/pvz/1103cd66-b770-4b00-882f-9cffcc577375/close_last_reception"
+			},
+			"response": []
+		}
+	]
+}
