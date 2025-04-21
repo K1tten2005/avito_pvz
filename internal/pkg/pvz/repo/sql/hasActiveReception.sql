@@ -1,0 +1,1 @@
+SELECT EXISTS(SELECT 1 FROM reception WHERE pvz_id = $1 AND status = 'in_progress')

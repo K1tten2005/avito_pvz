@@ -5,6 +5,7 @@ services:
       dockerfile: ./build/main.Dockerfile
     ports:
       - "8080:8080"
+      - "9000:9000"
     environment:
       POSTGRES_CONNECTION: ${POSTGRES_CONNECTION}
       JWT_SECRET: ${JWT_SECRET}

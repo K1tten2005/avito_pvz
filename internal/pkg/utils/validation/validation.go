@@ -22,6 +22,21 @@ var AllowedCities = []string{
 	"Казань",
 }
 
+var AllowedProductTypes = []string{
+	"электроника",
+	"одежда",
+	"обувь",
+}
+
+func IsValidProductType (productType string) bool {
+	for _, val := range AllowedProductTypes {
+		if productType == val {
+			return true
+		}
+	}
+	return false
+}
+
 func IsValidCity(city string) bool {
 	for _, val := range AllowedCities {
 		if city == val {

@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS reception (
     status reception_status NOT NULL
 );
 
-CREATE TYPE product_category AS ENUM ('electronics', 'clothing', 'shoes');
+CREATE TYPE product_category AS ENUM ('электроника', 'одежда', 'обувь');
 CREATE TABLE IF NOT EXISTS product (
     id UUID PRIMARY KEY,
     reception_time TIMESTAMPTZ NOT NULL DEFAULT now(),

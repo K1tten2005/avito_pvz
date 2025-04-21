@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -15,12 +16,15 @@ import (
 	"github.com/K1tten2005/avito_pvz/internal/middleware/cors"
 	"github.com/K1tten2005/avito_pvz/internal/middleware/csp"
 	"github.com/K1tten2005/avito_pvz/internal/middleware/logger"
+	"github.com/K1tten2005/avito_pvz/internal/middleware/metricsmw"
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	authHandler "github.com/K1tten2005/avito_pvz/internal/pkg/auth/delivery/http"
 	authRepo "github.com/K1tten2005/avito_pvz/internal/pkg/auth/repo"
 	authUsecase "github.com/K1tten2005/avito_pvz/internal/pkg/auth/usecase"
+	"github.com/K1tten2005/avito_pvz/internal/pkg/metrics"
 	pvzHandler "github.com/K1tten2005/avito_pvz/internal/pkg/pvz/delivery/http"
 	pvzRepo "github.com/K1tten2005/avito_pvz/internal/pkg/pvz/repo"
 	pvzUsecase "github.com/K1tten2005/avito_pvz/internal/pkg/pvz/usecase"
@@ -66,6 +70,12 @@ func main() {
 
 	logMW := logger.CreateLoggerMiddleware(loggerVar)
 
+	met, err := metrics.NewHttpMetrics()
+	if err != nil {
+		log.Fatal(err)
+	}
+	metricsmw.CreateHttpMetricsMiddleware(met)
+
 	authRepo := authRepo.CreateAuthRepo(pool)
 	authUsecase := authUsecase.CreateAuthUsecase(authRepo)
 	authHandler := authHandler.CreateAuthHandler(authUsecase)
@@ -79,6 +89,16 @@ func main() {
 	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Не найдено", http.StatusNotFound)
 	})
+
+	r.PathPrefix("/metrics").Handler(promhttp.Handler())
+
+	http.Handle("/", r)
+	httpSrv := http.Server{Handler: r, Addr: "0.0.0.0:9000"}
+	go func() {
+		if err := httpSrv.ListenAndServe(); err != nil {
+			loggerVar.Error("fail httpSrv.ListenAndServe")
+		}
+	}()
 	r.Use(
 		logMW,
 		cors.CorsMiddleware,
@@ -100,6 +120,12 @@ func main() {
 
 	protectedRoutes.HandleFunc("/pvz", pvzHandler.CreatePvz).Methods(http.MethodPost)
 	protectedRoutes.HandleFunc("/pvz", pvzHandler.GetPvz).Methods(http.MethodGet)
+	protectedRoutes.HandleFunc("/receptions", pvzHandler.CreateReception).Methods(http.MethodPost)
+	protectedRoutes.HandleFunc("/products", pvzHandler.AddProduct).Methods(http.MethodPost)
+	protectedRoutes.HandleFunc("/pvz/{pvzId/delete_last_product}", pvzHandler.DeleteProduct).Methods(http.MethodPost)
+	protectedRoutes.HandleFunc("/pvz/{pvzId/close_last_reception}", pvzHandler.CloseReception).Methods(http.MethodPost)
+
+
 
 	srv := http.Server{
 		Handler:           r,

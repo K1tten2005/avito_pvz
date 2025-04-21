@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"database/sql"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/K1tten2005/avito_pvz/internal/models"
+	"github.com/K1tten2005/avito_pvz/internal/pkg/pvz"
 	"github.com/K1tten2005/avito_pvz/internal/pkg/utils/logger"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgtype/pgxtype"
@@ -35,6 +37,21 @@ var updateReceptionStatus string
 
 //go:embed sql/getReceptionById.sql
 var getReceptionById string
+
+//go:embed sql/getActiveReception.sql
+var getActiveReception string
+
+//go:embed sql/hasActiveReception.sql
+var hasActiveReception string
+
+//go:embed sql/createReception.sql
+var createReception string
+
+//go:embed sql/addProduct.sql
+var addProduct string
+
+//go:embed sql/getLastProduct.sql
+var getLastProduct string
 
 type PvzRepo struct {
 	db pgxtype.Querier
@@ -98,7 +115,7 @@ func (repo *PvzRepo) GetPvz(ctx context.Context, startDate, endDate *time.Time, 
 		}
 
 		if pvzID.Status != pgtype.Present {
-			continue 
+			continue
 		}
 
 		pvzIDStr := uuidToString(pvzID)
@@ -136,10 +153,10 @@ func (repo *PvzRepo) GetPvz(ctx context.Context, startDate, endDate *time.Time, 
 						pvzMap[pvzIDStr].Receptions[i].Products = append(
 							pvzMap[pvzIDStr].Receptions[i].Products,
 							models.Product{
-								Id:            productUUID,
-								ReceptionTime: productDate,
-								Category:      productCategory,
-								ReceptionId:   receptionUUID,
+								Id:          productUUID,
+								DateTime:    productDate,
+								Type:        productCategory,
+								ReceptionId: receptionUUID,
 							})
 					}
 					recFound = true
@@ -149,10 +166,10 @@ func (repo *PvzRepo) GetPvz(ctx context.Context, startDate, endDate *time.Time, 
 
 			if !recFound {
 				rec := models.Reception{
-					Id:            receptionUUID,
-					ReceptionTime: receptionDate,
-					PvzId:         pvzUUID,
-					Status:        receptionStatus,
+					Id:       receptionUUID,
+					DateTime: receptionDate,
+					PvzId:    pvzUUID,
+					Status:   receptionStatus,
 				}
 
 				if productID.Status == pgtype.Present {
@@ -162,13 +179,13 @@ func (repo *PvzRepo) GetPvz(ctx context.Context, startDate, endDate *time.Time, 
 						return nil, err
 					}
 					rec.Products = append(rec.Products, models.Product{
-						Id:            productUUID,
-						ReceptionTime: productDate,
-						Category:      productCategory,
-						ReceptionId:   receptionUUID,
+						Id:          productUUID,
+						DateTime:    productDate,
+						Type:        productCategory,
+						ReceptionId: receptionUUID,
 					})
 				}
-				
+
 				pvzMap[pvzIDStr].Receptions = append(pvzMap[pvzIDStr].Receptions, rec)
 			}
 		}
@@ -181,37 +198,23 @@ func (repo *PvzRepo) GetPvz(ctx context.Context, startDate, endDate *time.Time, 
 	return result, nil
 }
 
-func (repo *PvzRepo) GetReceptionByID(ctx context.Context, id uuid.UUID) (*models.Reception, error) {
+func (repo *PvzRepo) GetReceptionByID(ctx context.Context, id uuid.UUID) (models.Reception, error) {
 	loggerVar := logger.GetLoggerFromContext(ctx).With(slog.String("func", logger.GetFuncName()))
 
 	var reception models.Reception
 	err := repo.db.QueryRow(ctx, getReceptionById, id).
-		Scan(&reception.Id, &reception.ReceptionTime, &reception.PvzId, &reception.Status)
+		Scan(&reception.Id, &reception.DateTime, &reception.PvzId, &reception.Status)
 	if err != nil {
 		loggerVar.Error(err.Error())
-		return nil, err
+		return models.Reception{}, err
 	}
-	return &reception, nil
-}
-
-func (repo *PvzRepo) UpdateReceptionStatus(ctx context.Context, id uuid.UUID, status string) error {
-	loggerVar := logger.GetLoggerFromContext(ctx).With(slog.String("func", logger.GetFuncName()))
-
-	cmd, err := repo.db.Exec(ctx, updateReceptionStatus, status, id)
-	if err != nil {
-		loggerVar.Error(err.Error())
-		return err
-	}
-	if cmd.RowsAffected() == 0 {
-		return errors.New("ничего не обновлено")
-	}
-	return nil
+	return reception, nil
 }
 
 func (repo *PvzRepo) InsertReception(ctx context.Context, reception models.Reception) error {
 	loggerVar := logger.GetLoggerFromContext(ctx).With(slog.String("func", logger.GetFuncName()))
 
-	_, err := repo.db.Exec(ctx, insertReception, reception.Id, reception.ReceptionTime, reception.PvzId, reception.Status)
+	_, err := repo.db.Exec(ctx, insertReception, reception.Id, reception.DateTime, reception.PvzId, reception.Status)
 	if err != nil {
 		loggerVar.Error(err.Error())
 		return err
@@ -223,7 +226,7 @@ func (repo *PvzRepo) InsertReception(ctx context.Context, reception models.Recep
 func (repo *PvzRepo) InsertProduct(ctx context.Context, product models.Product) error {
 	loggerVar := logger.GetLoggerFromContext(ctx).With(slog.String("func", logger.GetFuncName()))
 
-	_, err := repo.db.Exec(ctx, insertProduct, product.Id, product.ReceptionTime, product.ReceptionId, product.Category)
+	_, err := repo.db.Exec(ctx, insertProduct, product.Id, product.DateTime, product.ReceptionId, product.Type)
 	if err != nil {
 		loggerVar.Error(err.Error())
 		return err
@@ -231,6 +234,62 @@ func (repo *PvzRepo) InsertProduct(ctx context.Context, product models.Product) 
 	loggerVar.Info("Successful")
 	return nil
 }
+
+func (repo *PvzRepo) HasActiveReception(ctx context.Context, pvzID uuid.UUID) (bool, error) {
+	var exists bool
+	err := repo.db.QueryRow(ctx, hasActiveReception, pvzID).Scan(&exists)
+	return exists, err
+}
+
+func (repo *PvzRepo) GetActiveReception(ctx context.Context, pvzId uuid.UUID) (models.Reception, error) {
+	loggerVar := logger.GetLoggerFromContext(ctx).With(slog.String("func", logger.GetFuncName()))
+
+	var reception models.Reception
+	err := repo.db.QueryRow(ctx, getActiveReception, pvzId).
+		Scan(&reception.Id, &reception.DateTime, &reception.PvzId, &reception.Status)
+	if err == sql.ErrNoRows {
+		return models.Reception{}, pvz.ErrNoActiveReception
+	}
+	if err != nil {
+		loggerVar.Error(err.Error())
+		return models.Reception{}, err
+	}
+	return reception, nil
+}
+
+func (repo *PvzRepo) CreateReception(ctx context.Context, reception models.Reception) error {
+	_, err := repo.db.Exec(ctx, createReception, reception.Id, reception.DateTime, reception.PvzId, reception.Status)
+	return err
+}
+
+func (repo *PvzRepo) AddProduct(ctx context.Context, product *models.Product) error {
+	_, err := repo.db.Exec(ctx, addProduct, product.Id, product.DateTime, product.Type, product.ReceptionId)
+	return err
+}
+
+func (repo *PvzRepo) GetLastProduct(ctx context.Context, pvzID uuid.UUID) (models.Product, error) {
+	loggerVar := logger.GetLoggerFromContext(ctx).With(slog.String("func", logger.GetFuncName()))
+
+	var product models.Product
+	err := repo.db.QueryRow(ctx, getLastProduct, pvzID).Scan(
+		&product.Id,
+		&product.DateTime,
+		&product.Type,
+		&product.ReceptionId,
+	)
+
+	if err == sql.ErrNoRows {
+		loggerVar.Error(pvz.ErrNoProductsInReception.Error())
+		return models.Product{}, pvz.ErrNoProductsInReception
+	}
+	if err != nil {
+		loggerVar.Error(err.Error())
+		return models.Product{}, err
+	}
+
+	return product, nil
+}
+
 
 func (repo *PvzRepo) DeleteProduct(ctx context.Context, productId uuid.UUID) error {
 	loggerVar := logger.GetLoggerFromContext(ctx).With(slog.String("func", logger.GetFuncName()))
@@ -244,10 +303,24 @@ func (repo *PvzRepo) DeleteProduct(ctx context.Context, productId uuid.UUID) err
 	rowsAffected := result.RowsAffected()
 
 	if rowsAffected == 0 {
-		loggerVar.Error("продукт не найден")
-		return errors.New("продукт не найден")
+		loggerVar.Error("product not found")
+		return errors.New("product not found")
 	}
 
 	loggerVar.Info("Successful")
+	return nil
+}
+
+func (repo *PvzRepo) UpdateReceptionStatus(ctx context.Context, id uuid.UUID, status string) error {
+	loggerVar := logger.GetLoggerFromContext(ctx).With(slog.String("func", logger.GetFuncName()))
+
+	cmd, err := repo.db.Exec(ctx, updateReceptionStatus, status, id)
+	if err != nil {
+		loggerVar.Error(err.Error())
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
+		return errors.New("ничего не обновлено")
+	}
 	return nil
 }

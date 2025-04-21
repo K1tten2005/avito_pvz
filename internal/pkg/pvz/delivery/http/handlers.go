@@ -95,7 +95,7 @@ func (h *PvzHandler) GetPvz(w http.ResponseWriter, r *http.Request) {
 	if startDateStr != "" {
 		t, err := time.Parse(time.RFC3339, startDateStr)
 		if err != nil {
-			send_err.SendError(w, "неверный формат startDate", http.StatusBadRequest)
+			send_err.SendError(w, "wrong startDate format", http.StatusBadRequest)
 			return
 		}
 		startDate = &t
@@ -103,7 +103,7 @@ func (h *PvzHandler) GetPvz(w http.ResponseWriter, r *http.Request) {
 	if endDateStr != "" {
 		t, err := time.Parse(time.RFC3339, endDateStr)
 		if err != nil {
-			send_err.SendError(w, "неверный формат endDate", http.StatusBadRequest)
+			send_err.SendError(w, "wrong endDate format", http.StatusBadRequest)
 			return
 		}
 		endDate = &t
@@ -122,21 +122,120 @@ func (h *PvzHandler) GetPvz(w http.ResponseWriter, r *http.Request) {
 	logger.LogHandlerInfo(loggerVar, "Successful", http.StatusOK)
 }
 
-func (h *PvzHandler) CloseReception(w http.ResponseWriter, r *http.Request) {
+
+func (h *PvzHandler) CreateReception(w http.ResponseWriter, r *http.Request) {
 	loggerVar := logger.GetLoggerFromContext(r.Context()).With(slog.String("func", logger.GetFuncName()))
 
 	var req models.Reception
+
 	if err := easyjson.UnmarshalFromReader(r.Body, &req); err != nil {
 		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка парсинга JSON: %w", err), http.StatusBadRequest)
 		send_err.SendError(w, "ошибка парсинга JSON", http.StatusBadRequest)
 		return
 	}
 
-	err := h.uc.CloseReception(r.Context(), req.Id)
+	if req.PvzId == uuid.Nil {
+		logger.LogHandlerError(loggerVar, errors.New("PvzId not provided"), http.StatusBadRequest)
+		send_err.SendError(w, "PvzId not provided", http.StatusBadRequest)
+		return
+	}
+
+	reception, err := h.uc.CreateReception(r.Context(), req.PvzId)
 	if err != nil {
+		logger.LogHandlerError(loggerVar, fmt.Errorf("error on a level below (usecase): %w", err), http.StatusBadRequest)
 		send_err.SendError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(reception); err != nil {
+		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка формирования JSON: %w", err), http.StatusInternalServerError)
+		send_err.SendError(w, "ошибка формирования JSON", http.StatusInternalServerError)
+		return
+	}
+	logger.LogHandlerInfo(loggerVar, "Successful", http.StatusCreated)
+}
+
+func (h *PvzHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
+	loggerVar := logger.GetLoggerFromContext(r.Context()).With(slog.String("func", logger.GetFuncName()))
+
+	var req models.AddProductReq
+
+	if err := easyjson.UnmarshalFromReader(r.Body, &req); err != nil {
+		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка парсинга JSON: %w", err), http.StatusBadRequest)
+		send_err.SendError(w, "ошибка парсинга JSON", http.StatusBadRequest)
+		return
+	}
+
+	if !validation.IsValidProductType(req.Type) {
+		logger.LogHandlerError(loggerVar, errors.New("wrong product type"), http.StatusBadRequest)
+		send_err.SendError(w, "wrong product type", http.StatusBadRequest)
+		return
+	}
+
+	product, err := h.uc.AddProduct(r.Context(), req.PvzId, req.Type)
+	if err != nil {
+		logger.LogHandlerError(loggerVar, fmt.Errorf("error on a level below (usecase): %w", err), http.StatusBadRequest)
+		send_err.SendError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(product); err != nil {
+		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка формирования JSON: %w", err), http.StatusInternalServerError)
+		send_err.SendError(w, "ошибка формирования JSON", http.StatusInternalServerError)
+		return
+	}
+	logger.LogHandlerInfo(loggerVar, "Successful", http.StatusCreated)
+}
+
+func (h *PvzHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
+    loggerVar := logger.GetLoggerFromContext(r.Context()).With(slog.String("func", logger.GetFuncName()))
+    
+	pvzIdStr := r.URL.Query().Get("pvzId")
+    pvzID, err := uuid.FromString(pvzIdStr)
+    if err != nil {
+		logger.LogHandlerError(loggerVar, err, http.StatusBadRequest)
+        send_err.SendError(w, "wrong UUID format for pvzId query parameter", http.StatusBadRequest)
+        return
+    }
+    
+    err = h.uc.DeleteProduct(r.Context(), pvzID)
+    if err != nil {
+		logger.LogHandlerError(loggerVar, err, http.StatusBadRequest)
+        send_err.SendError(w, err.Error(), http.StatusBadRequest)
+        return
+    }
+	logger.LogHandlerInfo(loggerVar, "Success", http.StatusOK)
+}
+
+func (h *PvzHandler) CloseReception(w http.ResponseWriter, r *http.Request) {
+	loggerVar := logger.GetLoggerFromContext(r.Context()).With(slog.String("func", logger.GetFuncName()),)
+
+	pvzIdStr := r.URL.Query().Get("pvzId")
+    pvzID, err := uuid.FromString(pvzIdStr)
+    if err != nil {
+		logger.LogHandlerError(loggerVar, err, http.StatusBadRequest)
+        send_err.SendError(w, "wrong UUID format for pvzId query parameter", http.StatusBadRequest)
+        return
+    }
+
+	reception, err := h.uc.CloseReception(r.Context(), pvzID)
+	if err != nil {
+		logger.LogHandlerError(loggerVar, err, http.StatusBadRequest)
+		send_err.SendError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(reception); err != nil {
+		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка кодирования JSON: %w", err), http.StatusInternalServerError)
+		send_err.SendError(w, "ошибка формирования ответа", http.StatusInternalServerError)
+		return
+	}
+
+	logger.LogHandlerInfo(loggerVar, "Success", http.StatusOK)
 }

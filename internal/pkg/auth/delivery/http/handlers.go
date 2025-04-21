@@ -14,6 +14,7 @@ import (
 	"github.com/K1tten2005/avito_pvz/internal/pkg/utils/logger"
 	"github.com/K1tten2005/avito_pvz/internal/pkg/utils/send_err"
 	"github.com/K1tten2005/avito_pvz/internal/pkg/utils/validation"
+	"github.com/satori/uuid"
 	"github.com/mailru/easyjson"
 )
 
@@ -67,6 +68,7 @@ func (h *AuthHandler) DummyLogin(w http.ResponseWriter, r *http.Request) {
 	})
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(token))
 	logger.LogHandlerInfo(loggerVar, "Successful", http.StatusOK)
 }
 
@@ -81,7 +83,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	req.Sanitize()
 
-	user, token, err := h.uc.Login(r.Context(), req)
+	_, token, err := h.uc.Login(r.Context(), req)
 
 	if err != nil {
 		switch err {
@@ -105,11 +107,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 
 	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(user); err != nil {
-		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка формирования JSON: %w", err), http.StatusInternalServerError)
-		send_err.SendError(w, "ошибка формирования JSON", http.StatusInternalServerError)
-	}
+	w.Write([]byte(token))
 	logger.LogHandlerInfo(loggerVar, "Successful", http.StatusOK)
 }
 
@@ -153,9 +151,19 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 	})
 
+	resp := struct {
+		Id    uuid.UUID `json:"id"`
+		Email string    `json:"email"`
+		Role  string    `json:"role"`
+	}{
+		Id:    user.Id,
+		Email: user.Email,
+		Role:  user.Role,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(user); err != nil {
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка формирования JSON: %w", err), http.StatusInternalServerError)
 		send_err.SendError(w, "ошибка формирования JSON", http.StatusInternalServerError)
 	}

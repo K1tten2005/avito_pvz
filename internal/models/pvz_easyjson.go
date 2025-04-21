@@ -40,7 +40,7 @@ func easyjson232327a2DecodeGithubComK1tten2005AvitoPvzInternalModels(in *jlexer.
 			if data := in.UnsafeBytes(); in.Ok() {
 				in.AddError((out.Id).UnmarshalText(data))
 			}
-		case "registration_date":
+		case "registrationDate":
 			if data := in.Raw(); in.Ok() {
 				in.AddError((out.RegistrationDate).UnmarshalJSON(data))
 			}
@@ -89,7 +89,7 @@ func easyjson232327a2EncodeGithubComK1tten2005AvitoPvzInternalModels(out *jwrite
 		out.RawText((in.Id).MarshalText())
 	}
 	{
-		const prefix string = ",\"registration_date\":"
+		const prefix string = ",\"registrationDate\":"
 		out.RawString(prefix)
 		out.Raw((in.RegistrationDate).MarshalJSON())
 	}

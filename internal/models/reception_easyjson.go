@@ -40,11 +40,11 @@ func easyjson26500425DecodeGithubComK1tten2005AvitoPvzInternalModels(in *jlexer.
 			if data := in.UnsafeBytes(); in.Ok() {
 				in.AddError((out.Id).UnmarshalText(data))
 			}
-		case "reception_time":
+		case "dateTime":
 			if data := in.Raw(); in.Ok() {
-				in.AddError((out.ReceptionTime).UnmarshalJSON(data))
+				in.AddError((out.DateTime).UnmarshalJSON(data))
 			}
-		case "pvzid":
+		case "pvzId":
 			if data := in.UnsafeBytes(); in.Ok() {
 				in.AddError((out.PvzId).UnmarshalText(data))
 			}
@@ -93,12 +93,12 @@ func easyjson26500425EncodeGithubComK1tten2005AvitoPvzInternalModels(out *jwrite
 		out.RawText((in.Id).MarshalText())
 	}
 	{
-		const prefix string = ",\"reception_time\":"
+		const prefix string = ",\"dateTime\":"
 		out.RawString(prefix)
-		out.Raw((in.ReceptionTime).MarshalJSON())
+		out.Raw((in.DateTime).MarshalJSON())
 	}
 	{
-		const prefix string = ",\"pvzid\":"
+		const prefix string = ",\"pvzId\":"
 		out.RawString(prefix)
 		out.RawText((in.PvzId).MarshalText())
 	}
@@ -172,12 +172,12 @@ func easyjson26500425DecodeGithubComK1tten2005AvitoPvzInternalModels1(in *jlexer
 			if data := in.UnsafeBytes(); in.Ok() {
 				in.AddError((out.Id).UnmarshalText(data))
 			}
-		case "reception_time":
+		case "dateTime":
 			if data := in.Raw(); in.Ok() {
-				in.AddError((out.ReceptionTime).UnmarshalJSON(data))
+				in.AddError((out.DateTime).UnmarshalJSON(data))
 			}
-		case "category":
-			out.Category = string(in.String())
+		case "type":
+			out.Type = string(in.String())
 		case "reception_id":
 			if data := in.UnsafeBytes(); in.Ok() {
 				in.AddError((out.ReceptionId).UnmarshalText(data))
@@ -202,14 +202,14 @@ func easyjson26500425EncodeGithubComK1tten2005AvitoPvzInternalModels1(out *jwrit
 		out.RawText((in.Id).MarshalText())
 	}
 	{
-		const prefix string = ",\"reception_time\":"
+		const prefix string = ",\"dateTime\":"
 		out.RawString(prefix)
-		out.Raw((in.ReceptionTime).MarshalJSON())
+		out.Raw((in.DateTime).MarshalJSON())
 	}
 	{
-		const prefix string = ",\"category\":"
+		const prefix string = ",\"type\":"
 		out.RawString(prefix)
-		out.String(string(in.Category))
+		out.String(string(in.Type))
 	}
 	{
 		const prefix string = ",\"reception_id\":"

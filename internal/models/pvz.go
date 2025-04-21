@@ -10,7 +10,7 @@ import (
 // easyjson:json
 type PVZ struct {
 	Id               uuid.UUID   `json:"id"`
-	RegistrationDate time.Time   `json:"registration_date"`
+	RegistrationDate time.Time   `json:"registrationDate"`
 	City             string      `json:"city"`
 	Receptions       []Reception `json:"receptions"`
 }
