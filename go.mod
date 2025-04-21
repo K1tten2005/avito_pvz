@@ -5,6 +5,7 @@ go 1.23.5
 require (
 	github.com/casbin/casbin/v2 v2.105.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/golang/mock v1.4.4
 	github.com/gorilla/mux v1.8.1
 	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx/v4 v4.18.3
