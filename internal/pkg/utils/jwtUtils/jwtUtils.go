@@ -9,7 +9,6 @@ import (
 	"github.com/K1tten2005/avito_pvz/internal/models"
 	"github.com/K1tten2005/avito_pvz/internal/pkg/auth"
 	"github.com/golang-jwt/jwt"
-	"github.com/satori/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,8 +19,8 @@ func GenerateToken(user models.User) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"role":  user.Role,
-		"exp":   time.Now().Add(24 * time.Hour).Unix(),
+		"role": user.Role,
+		"exp":  time.Now().Add(24 * time.Hour).Unix(),
 	})
 
 	return token.SignedString([]byte(secret))
@@ -45,11 +44,10 @@ func GetRoleFromJWT(JWTStr string, claims jwt.MapClaims, secret string) (string,
 	return role, ok
 }
 
-func GenerateJWTForTest(t *testing.T, email, secret string, id uuid.UUID) string {
+func GenerateJWTForTest(t *testing.T, role, secret string) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email": email,
-		"id":    id,
-		"exp":   time.Now().Add(time.Hour).Unix(),
+		"role": role,
+		"exp":  time.Now().Add(time.Hour).Unix(),
 	})
 	tokenStr, err := token.SignedString([]byte(secret))
 	require.NoError(t, err)

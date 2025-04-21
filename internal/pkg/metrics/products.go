@@ -46,5 +46,5 @@ func (m *ProductMetrics) IncreasePvzTotal() {
 	m.PvzTotal.Inc()
 }
 func (m *ProductMetrics) IncreaseProductTotal() {
-	m.PvzTotal.Inc()
+	m.ProductTotal.Inc()
 }

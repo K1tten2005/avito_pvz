@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -34,8 +33,7 @@ func TestGetRoleFromJWT(t *testing.T) {
 func TestGenerateJWTForTest(t *testing.T) {
 	role := "employee"
 	secret := "secret"
-	id := uuid.NewV4()
 
-	tokenStr := GenerateJWTForTest(t, role, secret, id)
+	tokenStr := GenerateJWTForTest(t, role, secret)
 	assert.NotNil(t, tokenStr)
 }

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/K1tten2005/avito_pvz/internal/models"
+	"github.com/K1tten2005/avito_pvz/internal/pkg/metrics"
 	"github.com/K1tten2005/avito_pvz/internal/pkg/pvz"
 	"github.com/K1tten2005/avito_pvz/internal/pkg/utils/logger"
 	"github.com/K1tten2005/avito_pvz/internal/pkg/utils/send_err"
@@ -23,10 +24,11 @@ import (
 type PvzHandler struct {
 	uc     pvz.PvzUsecase
 	secret string
+	mt     *metrics.ProductMetrics
 }
 
-func CreatePvzHandler(uc pvz.PvzUsecase) *PvzHandler {
-	return &PvzHandler{uc: uc, secret: os.Getenv("JWT_SECRET")}
+func CreatePvzHandler(uc pvz.PvzUsecase, mt *metrics.ProductMetrics) *PvzHandler {
+	return &PvzHandler{uc: uc, secret: os.Getenv("JWT_SECRET"), mt: mt}
 }
 
 func (h *PvzHandler) CreatePvz(w http.ResponseWriter, r *http.Request) {
@@ -66,8 +68,14 @@ func (h *PvzHandler) CreatePvz(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(req); err != nil {
-		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка формирования JSON: %w", err), http.StatusInternalServerError)
-		send_err.SendError(w, "ошибка формирования JSON", http.StatusInternalServerError)
+		logger.LogHandlerError(loggerVar, fmt.Errorf("error while forming JSON: %w", err), http.StatusInternalServerError)
+		send_err.SendError(w, "error while forming JSON", http.StatusInternalServerError)
+	}
+
+	if h.mt != nil {
+		h.mt.IncreasePvzTotal()
+	} else {
+		logger.LogHandlerError(loggerVar, errors.New("metrics collector is nil"), http.StatusInternalServerError)
 	}
 	logger.LogHandlerInfo(loggerVar, "Successful", http.StatusOK)
 }
@@ -155,6 +163,12 @@ func (h *PvzHandler) CreateReception(w http.ResponseWriter, r *http.Request) {
 		send_err.SendError(w, "ошибка формирования JSON", http.StatusInternalServerError)
 		return
 	}
+
+	if h.mt != nil {
+		h.mt.IncreaseReceptionTotal()
+	} else {
+		logger.LogHandlerError(loggerVar, errors.New("metrics collector is nil"), http.StatusInternalServerError)
+	}
 	logger.LogHandlerInfo(loggerVar, "Successful", http.StatusCreated)
 }
 
@@ -188,6 +202,12 @@ func (h *PvzHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка формирования JSON: %w", err), http.StatusInternalServerError)
 		send_err.SendError(w, "ошибка формирования JSON", http.StatusInternalServerError)
 		return
+	}
+
+	if h.mt != nil {
+		h.mt.IncreaseProductTotal()
+	} else {
+		logger.LogHandlerError(loggerVar, errors.New("metrics collector is nil"), http.StatusInternalServerError)
 	}
 	logger.LogHandlerInfo(loggerVar, "Successful", http.StatusCreated)
 }

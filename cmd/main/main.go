@@ -70,11 +70,10 @@ func main() {
 
 	logMW := logger.CreateLoggerMiddleware(loggerVar)
 
-	met, err := metrics.NewHttpMetrics()
+	mt0, err := metrics.NewProductMetrics()
 	if err != nil {
 		log.Fatal(err)
 	}
-	metricsmw.CreateHttpMetricsMiddleware(met)
 
 	authRepo := authRepo.CreateAuthRepo(pool)
 	authUsecase := authUsecase.CreateAuthUsecase(authRepo)
@@ -82,7 +81,13 @@ func main() {
 
 	pvzRepo := pvzRepo.CreatePvzRepo(pool)
 	pvzUsecase := pvzUsecase.CreatePvzUsecase(pvzRepo)
-	pvzHandler := pvzHandler.CreatePvzHandler(pvzUsecase)
+	pvzHandler := pvzHandler.CreatePvzHandler(pvzUsecase, mt0)
+
+	met, err := metrics.NewHttpMetrics()
+	if err != nil {
+		log.Fatal(err)
+	}
+	metricsmw.CreateHttpMetricsMiddleware(met)
 
 	r := mux.NewRouter()
 
