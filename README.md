@@ -28,7 +28,7 @@ cd avito_pvz
 Выполните из корня проекта:
 
 ```bash
-docker compose --build -d
+docker compose up --build -d
 ```
 
 ### 4. Настройки
