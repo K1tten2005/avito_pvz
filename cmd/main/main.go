@@ -122,8 +122,8 @@ func main() {
 	protectedRoutes.HandleFunc("/pvz", pvzHandler.GetPvz).Methods(http.MethodGet)
 	protectedRoutes.HandleFunc("/receptions", pvzHandler.CreateReception).Methods(http.MethodPost)
 	protectedRoutes.HandleFunc("/products", pvzHandler.AddProduct).Methods(http.MethodPost)
-	protectedRoutes.HandleFunc("/pvz/{pvzId/delete_last_product}", pvzHandler.DeleteProduct).Methods(http.MethodPost)
-	protectedRoutes.HandleFunc("/pvz/{pvzId/close_last_reception}", pvzHandler.CloseReception).Methods(http.MethodPost)
+	protectedRoutes.HandleFunc("/pvz/{pvzId}/delete_last_product", pvzHandler.DeleteProduct).Methods(http.MethodPost)
+	protectedRoutes.HandleFunc("/pvz/{pvzId}/close_last_reception", pvzHandler.CloseReception).Methods(http.MethodPost)
 
 
 

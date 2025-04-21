@@ -47,9 +47,6 @@ var hasActiveReception string
 //go:embed sql/createReception.sql
 var createReception string
 
-//go:embed sql/addProduct.sql
-var addProduct string
-
 //go:embed sql/getLastProduct.sql
 var getLastProduct string
 
@@ -89,114 +86,119 @@ func (repo *PvzRepo) InsertPvz(ctx context.Context, pvz models.PVZ) error {
 }
 
 func (repo *PvzRepo) GetPvz(ctx context.Context, startDate, endDate *time.Time, page, limit int) ([]models.PVZ, error) {
-	offset := (page - 1) * limit
+    offset := (page - 1) * limit
 
-	rows, err := repo.db.Query(ctx, getPvz, startDate, endDate, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+    rows, err := repo.db.Query(ctx, getPvz, startDate, endDate, limit, offset)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
 
-	pvzMap := make(map[string]*models.PVZ)
+    pvzMap := make(map[string]*models.PVZ)
 
-	for rows.Next() {
-		var (
-			pvzID, receptionID, productID       pgtype.UUID
-			pvzCity, productCategory            string
-			pvzDate, receptionDate, productDate time.Time
-			receptionStatus                     string
-		)
+    for rows.Next() {
+        var (
+            pvzID uuid.NullUUID
+            pvzCity sql.NullString
+            pvzDate sql.NullTime
 
-		err := rows.Scan(&pvzID, &pvzCity, &pvzDate,
-			&receptionID, &receptionDate, &receptionStatus,
-			&productID, &productDate, &productCategory)
-		if err != nil {
-			return nil, err
-		}
+            receptionID uuid.NullUUID
+            receptionDate sql.NullTime
+            receptionStatus sql.NullString
 
-		if pvzID.Status != pgtype.Present {
-			continue
-		}
+            productID uuid.NullUUID
+            productDate sql.NullTime
+            productCategory sql.NullString
+        )
 
-		pvzIDStr := uuidToString(pvzID)
+        err := rows.Scan(
+            &pvzID, &pvzCity, &pvzDate,
+            &receptionID, &receptionDate, &receptionStatus,
+            &productID, &productDate, &productCategory,
+        )
+        if err != nil {
+            return nil, err
+        }
 
-		pvzUUID, err := uuid.FromString(pvzIDStr)
-		if err != nil {
-			return nil, err
-		}
+        if !pvzID.Valid {
+            continue // ПВЗ должен существовать
+        }
 
-		if _, exists := pvzMap[pvzIDStr]; !exists {
-			pvzMap[pvzIDStr] = &models.PVZ{
-				Id:               pvzUUID,
-				City:             pvzCity,
-				RegistrationDate: pvzDate,
-				Receptions:       []models.Reception{},
-			}
-		}
+        pvzUUID := pvzID.UUID
+        pvzKey := pvzUUID.String()
 
-		if receptionID.Status == pgtype.Present {
-			receptionIDStr := uuidToString(receptionID)
-			receptionUUID, err := uuid.FromString(receptionIDStr)
-			if err != nil {
-				return nil, err
-			}
-			recFound := false
+        // Если ПВЗ ещё не добавлен в карту
+        if _, exists := pvzMap[pvzKey]; !exists {
+            pvzMap[pvzKey] = &models.PVZ{
+                Id:               pvzUUID,
+                City:             pvzCity.String,
+                RegistrationDate: pvzDate.Time,
+                Receptions:       []models.Reception{},
+            }
+        }
 
-			for i := range pvzMap[pvzIDStr].Receptions {
-				if pvzMap[pvzIDStr].Receptions[i].Id == receptionUUID {
-					if productID.Status == pgtype.Present {
-						productIDStr := uuidToString(productID)
-						productUUID, err := uuid.FromString(productIDStr)
-						if err != nil {
-							return nil, err
-						}
-						pvzMap[pvzIDStr].Receptions[i].Products = append(
-							pvzMap[pvzIDStr].Receptions[i].Products,
-							models.Product{
-								Id:          productUUID,
-								DateTime:    productDate,
-								Type:        productCategory,
-								ReceptionId: receptionUUID,
-							})
-					}
-					recFound = true
-					break
-				}
-			}
+        // Если есть приёмка
+        if receptionID.Valid {
+            receptionUUID := receptionID.UUID
+            recFound := false
 
-			if !recFound {
-				rec := models.Reception{
-					Id:       receptionUUID,
-					DateTime: receptionDate,
-					PvzId:    pvzUUID,
-					Status:   receptionStatus,
-				}
+            // Найдём существующую приёмку
+            for i := range pvzMap[pvzKey].Receptions {
+                if pvzMap[pvzKey].Receptions[i].Id == receptionUUID {
+                    // Если есть товар, добавим его
+                    if productID.Valid {
+                        pvzMap[pvzKey].Receptions[i].Products = append(
+                            pvzMap[pvzKey].Receptions[i].Products,
+                            models.Product{
+                                Id:          productID.UUID,
+                                DateTime:    productDate.Time,
+                                Type:        productCategory.String,
+                                ReceptionId: receptionUUID,
+                            },
+                        )
+                    }
+                    recFound = true
+                    break
+                }
+            }
 
-				if productID.Status == pgtype.Present {
-					productIDStr := uuidToString(productID)
-					productUUID, err := uuid.FromString(productIDStr)
-					if err != nil {
-						return nil, err
-					}
-					rec.Products = append(rec.Products, models.Product{
-						Id:          productUUID,
-						DateTime:    productDate,
-						Type:        productCategory,
-						ReceptionId: receptionUUID,
-					})
-				}
+            // Если приёмка ещё не была добавлена
+            if !recFound {
+                rec := models.Reception{
+                    Id:       receptionUUID,
+                    DateTime: receptionDate.Time,
+                    PvzId:    pvzUUID,
+                    Status:   receptionStatus.String,
+                    Products: []models.Product{},
+                }
 
-				pvzMap[pvzIDStr].Receptions = append(pvzMap[pvzIDStr].Receptions, rec)
-			}
-		}
-	}
+                if productID.Valid {
+                    rec.Products = append(rec.Products, models.Product{
+                        Id:          productID.UUID,
+                        DateTime:    productDate.Time,
+                        Type:        productCategory.String,
+                        ReceptionId: receptionUUID,
+                    })
+                }
 
-	var result []models.PVZ
-	for _, val := range pvzMap {
-		result = append(result, *val)
-	}
-	return result, nil
+                pvzMap[pvzKey].Receptions = append(pvzMap[pvzKey].Receptions, rec)
+            }
+        }
+    }
+
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
+
+    var result []models.PVZ
+    for _, val := range pvzMap {
+        result = append(result, *val)
+    }
+
+    return result, nil
 }
+
+
 
 func (repo *PvzRepo) GetReceptionByID(ctx context.Context, id uuid.UUID) (models.Reception, error) {
 	loggerVar := logger.GetLoggerFromContext(ctx).With(slog.String("func", logger.GetFuncName()))
@@ -263,7 +265,7 @@ func (repo *PvzRepo) CreateReception(ctx context.Context, reception models.Recep
 }
 
 func (repo *PvzRepo) AddProduct(ctx context.Context, product *models.Product) error {
-	_, err := repo.db.Exec(ctx, addProduct, product.Id, product.DateTime, product.Type, product.ReceptionId)
+	_, err := repo.db.Exec(ctx, insertProduct, product.Id, product.DateTime, product.ReceptionId, product.Type)
 	return err
 }
 

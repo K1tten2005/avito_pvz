@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS product (
     id UUID PRIMARY KEY,
     reception_time TIMESTAMPTZ NOT NULL DEFAULT now(),
     reception_id UUID NOT NULL REFERENCES reception(id) ON DELETE CASCADE,
-    category product_category NOT NULL
+    category TEXT NOT NULL
 );
 
 INSERT INTO users (id, email, role, password_hash)

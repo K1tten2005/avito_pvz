@@ -15,6 +15,7 @@ import (
 	"github.com/K1tten2005/avito_pvz/internal/pkg/utils/logger"
 	"github.com/K1tten2005/avito_pvz/internal/pkg/utils/send_err"
 	"github.com/K1tten2005/avito_pvz/internal/pkg/utils/validation"
+	"github.com/gorilla/mux"
 	"github.com/mailru/easyjson"
 	"github.com/satori/uuid"
 )
@@ -115,13 +116,13 @@ func (h *PvzHandler) GetPvz(w http.ResponseWriter, r *http.Request) {
 		send_err.SendError(w, err.Error(), http.StatusInternalServerError)
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(pvz); err != nil {
 		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка формирования JSON: %w", err), http.StatusInternalServerError)
 		send_err.SendError(w, "ошибка формирования JSON", http.StatusInternalServerError)
 	}
 	logger.LogHandlerInfo(loggerVar, "Successful", http.StatusOK)
 }
-
 
 func (h *PvzHandler) CreateReception(w http.ResponseWriter, r *http.Request) {
 	loggerVar := logger.GetLoggerFromContext(r.Context()).With(slog.String("func", logger.GetFuncName()))
@@ -192,35 +193,37 @@ func (h *PvzHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PvzHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
-    loggerVar := logger.GetLoggerFromContext(r.Context()).With(slog.String("func", logger.GetFuncName()))
-    
-	pvzIdStr := r.URL.Query().Get("pvzId")
-    pvzID, err := uuid.FromString(pvzIdStr)
-    if err != nil {
+	loggerVar := logger.GetLoggerFromContext(r.Context()).With(slog.String("func", logger.GetFuncName()))
+
+	vars := mux.Vars(r)
+	pvzIdStr := vars["pvzId"]
+	pvzID, err := uuid.FromString(pvzIdStr)
+	if err != nil {
 		logger.LogHandlerError(loggerVar, err, http.StatusBadRequest)
-        send_err.SendError(w, "wrong UUID format for pvzId query parameter", http.StatusBadRequest)
-        return
-    }
-    
-    err = h.uc.DeleteProduct(r.Context(), pvzID)
-    if err != nil {
+		send_err.SendError(w, "wrong UUID format for pvzId query parameter", http.StatusBadRequest)
+		return
+	}
+
+	err = h.uc.DeleteProduct(r.Context(), pvzID)
+	if err != nil {
 		logger.LogHandlerError(loggerVar, err, http.StatusBadRequest)
-        send_err.SendError(w, err.Error(), http.StatusBadRequest)
-        return
-    }
+		send_err.SendError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	logger.LogHandlerInfo(loggerVar, "Success", http.StatusOK)
 }
 
 func (h *PvzHandler) CloseReception(w http.ResponseWriter, r *http.Request) {
-	loggerVar := logger.GetLoggerFromContext(r.Context()).With(slog.String("func", logger.GetFuncName()),)
+	loggerVar := logger.GetLoggerFromContext(r.Context()).With(slog.String("func", logger.GetFuncName()))
 
-	pvzIdStr := r.URL.Query().Get("pvzId")
-    pvzID, err := uuid.FromString(pvzIdStr)
-    if err != nil {
+	vars := mux.Vars(r)
+	pvzIdStr := vars["pvzId"]
+	pvzID, err := uuid.FromString(pvzIdStr)
+	if err != nil {
 		logger.LogHandlerError(loggerVar, err, http.StatusBadRequest)
-        send_err.SendError(w, "wrong UUID format for pvzId query parameter", http.StatusBadRequest)
-        return
-    }
+		send_err.SendError(w, "wrong UUID format for pvzId query parameter", http.StatusBadRequest)
+		return
+	}
 
 	reception, err := h.uc.CloseReception(r.Context(), pvzID)
 	if err != nil {

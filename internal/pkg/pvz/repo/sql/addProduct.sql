@@ -1,1 +1,0 @@
-INSERT INTO product (id, reception_time, type, reception_id) VALUES ($1, $2, $3, $4)
