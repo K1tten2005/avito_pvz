@@ -81,6 +81,7 @@ func (uc *PvzUsecase) AddProduct(ctx context.Context, pvzID uuid.UUID, productTy
 	}
 
 	if err := uc.repo.AddProduct(ctx, product); err != nil {
+		loggerVar.Error(err.Error())
 		return nil, err
 	}
 

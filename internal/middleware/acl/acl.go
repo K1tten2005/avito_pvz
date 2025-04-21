@@ -26,7 +26,7 @@ func InitACL(logger *slog.Logger) error {
 	}
 
 	Enforcer = e
-	logger.Info("Успешный запуск ACL")
+	logger.Info("Successfully launched ACL")
 	return nil
 }
 
@@ -37,11 +37,11 @@ func ACLMiddleware(next http.Handler) http.Handler {
 		cookieJWT, err := r.Cookie("AvitoJWT")
 		if err != nil {
 			if err == http.ErrNoCookie {
-				logger.LogHandlerError(loggerVar, errors.New("нет куки jwt"), http.StatusForbidden)
-				send_err.SendError(w, "нет куки jwt", http.StatusForbidden)
+				logger.LogHandlerError(loggerVar, errors.New("no jwt cookie"), http.StatusForbidden)
+				send_err.SendError(w, "no jwt cookie", http.StatusForbidden)
 				return
 			}
-			send_err.SendError(w, "ошибка куки jwt", http.StatusBadRequest)
+			send_err.SendError(w, "error in jwt cookie", http.StatusBadRequest)
 		}
 
 		JWTStr := cookieJWT.Value
@@ -49,8 +49,8 @@ func ACLMiddleware(next http.Handler) http.Handler {
 
 		role, ok := jwtUtils.GetRoleFromJWT(JWTStr, claims, secret)
 		if !ok || role == "" {
-			logger.LogHandlerError(loggerVar, errors.New("нет роли"), http.StatusForbidden)
-			send_err.SendError(w, "нет роли", http.StatusForbidden)
+			logger.LogHandlerError(loggerVar, errors.New("no role"), http.StatusForbidden)
+			send_err.SendError(w, "no role", http.StatusForbidden)
 			return
 		}
 		
@@ -59,13 +59,13 @@ func ACLMiddleware(next http.Handler) http.Handler {
 
 		allowed, err := Enforcer.Enforce(role, path, method)
 		if err != nil {
-			logger.LogHandlerError(loggerVar, errors.New("ошибка enforce"), http.StatusInternalServerError)
-			send_err.SendError(w, "ошибка enforce", http.StatusInternalServerError)
+			logger.LogHandlerError(loggerVar, errors.New("error enforce"), http.StatusInternalServerError)
+			send_err.SendError(w, "error enforce", http.StatusInternalServerError)
 			return
 		}
 		if !allowed {
-			logger.LogHandlerError(loggerVar, errors.New("нет прав доступа"), http.StatusForbidden)
-			send_err.SendError(w, "нет прав доступа", http.StatusForbidden)
+			logger.LogHandlerError(loggerVar, errors.New("not enough access rights"), http.StatusForbidden)
+			send_err.SendError(w, "not enough access rights", http.StatusForbidden)
 			return
 		}
 

@@ -16,12 +16,12 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		_, err := r.Cookie("AvitoJWT")
 		if err != nil {
 			if err == http.ErrNoCookie {
-				logger.LogHandlerError(loggerVar, fmt.Errorf("токен отсутствует: %w", err), http.StatusBadRequest)
-				send_err.SendError(w, "токен отсутствует", http.StatusBadRequest)
+				logger.LogHandlerError(loggerVar, fmt.Errorf("no token: %w", err), http.StatusBadRequest)
+				send_err.SendError(w, "no token", http.StatusBadRequest)
 				return
 			}
-			logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка при чтении куки: %w", err), http.StatusBadRequest)
-			send_err.SendError(w, "ошибка при чтении куки", http.StatusBadRequest)
+			logger.LogHandlerError(loggerVar, fmt.Errorf("error while parsing cookie: %w", err), http.StatusBadRequest)
+			send_err.SendError(w, "error while parsing cookie", http.StatusBadRequest)
 			return
 		}
 		next.ServeHTTP(w, r)

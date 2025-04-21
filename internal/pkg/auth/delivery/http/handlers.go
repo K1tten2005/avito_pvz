@@ -40,8 +40,8 @@ func (h *AuthHandler) DummyLogin(w http.ResponseWriter, r *http.Request) {
 	req.Sanitize()
 
 	if !validation.IsValidRole(req.Role) {
-		logger.LogHandlerError(loggerVar, errors.New("не валидная роль"), http.StatusBadRequest)
-		send_err.SendError(w, "не валидная роль", http.StatusBadRequest)
+		logger.LogHandlerError(loggerVar, errors.New("invalid role format"), http.StatusBadRequest)
+		send_err.SendError(w, "invalid role format", http.StatusBadRequest)
 	}
 
 	token, err := h.uc.DummyLogin(r.Context(), req)
@@ -52,8 +52,8 @@ func (h *AuthHandler) DummyLogin(w http.ResponseWriter, r *http.Request) {
 			logger.LogHandlerError(loggerVar, err, http.StatusUnauthorized)
 			send_err.SendError(w, err.Error(), http.StatusUnauthorized)
 		default:
-			logger.LogHandlerError(loggerVar, fmt.Errorf("неизвестная ошибка: %w", err), http.StatusBadRequest)
-			send_err.SendError(w, "неизвестная ошибка", http.StatusBadRequest)
+			logger.LogHandlerError(loggerVar, fmt.Errorf("unknkown error: %w", err), http.StatusBadRequest)
+			send_err.SendError(w, "unknkown error", http.StatusBadRequest)
 		}
 		return
 	}
@@ -77,8 +77,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	var req models.LoginReq
 	if err := easyjson.UnmarshalFromReader(r.Body, &req); err != nil {
-		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка парсинга JSON: %w", err), http.StatusBadRequest)
-		send_err.SendError(w, "ошибка парсинга JSON", http.StatusBadRequest)
+		logger.LogHandlerError(loggerVar, fmt.Errorf("error while parsing JSON: %w", err), http.StatusBadRequest)
+		send_err.SendError(w, "error while parsing JSON", http.StatusBadRequest)
 		return
 	}
 	req.Sanitize()
@@ -91,8 +91,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			logger.LogHandlerError(loggerVar, err, http.StatusBadRequest)
 			send_err.SendError(w, err.Error(), http.StatusBadRequest)
 		default:
-			logger.LogHandlerError(loggerVar, fmt.Errorf("неизвестная ошибка: %w", err), http.StatusInternalServerError)
-			send_err.SendError(w, "неизвестная ошибка", http.StatusBadRequest)
+			logger.LogHandlerError(loggerVar, fmt.Errorf("unknkown error: %w", err), http.StatusInternalServerError)
+			send_err.SendError(w, "unknkown error", http.StatusBadRequest)
 		}
 		return
 	}
@@ -117,15 +117,15 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req models.RegisterReq
 	err := easyjson.UnmarshalFromReader(r.Body, &req)
 	if err != nil {
-		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка парсинга JSON: %w", err), http.StatusBadRequest)
-		send_err.SendError(w, "ошибка парсинга JSON", http.StatusBadRequest)
+		logger.LogHandlerError(loggerVar, fmt.Errorf("error while parsing JSON: %w", err), http.StatusBadRequest)
+		send_err.SendError(w, "error while parsing JSON", http.StatusBadRequest)
 		return
 	}
 	req.Sanitize()
 
 	if !validation.IsValidRole(req.Role) {
-		logger.LogHandlerError(loggerVar, errors.New("невалидная роль"), http.StatusBadRequest)
-		send_err.SendError(w, "невалидная роль", http.StatusBadRequest)
+		logger.LogHandlerError(loggerVar, errors.New("invalid role format"), http.StatusBadRequest)
+		send_err.SendError(w, "invalid role format", http.StatusBadRequest)
 	}
 
 	user, token, err := h.uc.Register(r.Context(), req)
@@ -133,11 +133,11 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch err {
 		case auth.ErrInvalidEmail, auth.ErrInvalidPassword:
-			logger.LogHandlerError(loggerVar, fmt.Errorf("неправильный логин или пароль: %w", err), http.StatusBadRequest)
-			send_err.SendError(w, "неправильный логин или пароль", http.StatusBadRequest)
+			logger.LogHandlerError(loggerVar, fmt.Errorf("invalid mail or password: %w", err), http.StatusBadRequest)
+			send_err.SendError(w, "invalid mail or password", http.StatusBadRequest)
 		default:
-			logger.LogHandlerError(loggerVar, fmt.Errorf("неизвестная ошибка: %w", err), http.StatusInternalServerError)
-			send_err.SendError(w, "неизвестная ошибка", http.StatusInternalServerError)
+			logger.LogHandlerError(loggerVar, fmt.Errorf("unknkown error: %w", err), http.StatusInternalServerError)
+			send_err.SendError(w, "unknkown error", http.StatusBadRequest)
 		}
 		return
 	}
@@ -164,8 +164,8 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка формирования JSON: %w", err), http.StatusInternalServerError)
-		send_err.SendError(w, "ошибка формирования JSON", http.StatusInternalServerError)
+		logger.LogHandlerError(loggerVar, fmt.Errorf("error while parsing JSON: %w", err), http.StatusBadRequest)
+		send_err.SendError(w, "error while parsing JSON", http.StatusBadRequest)
 	}
 	logger.LogHandlerInfo(loggerVar, "Successful", http.StatusCreated)
 	w.WriteHeader(http.StatusCreated)

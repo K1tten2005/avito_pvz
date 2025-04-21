@@ -37,7 +37,6 @@ func (uc *AuthUsecase) DummyLogin(ctx context.Context, data models.DummyLoginReq
 		return "", auth.ErrGeneratingToken
 	}
 
-
 	loggerVar.Info("Successful")
 	return token, nil
 }

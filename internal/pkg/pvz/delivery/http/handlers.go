@@ -37,32 +37,32 @@ func (h *PvzHandler) CreatePvz(w http.ResponseWriter, r *http.Request) {
 	var req models.PVZ
 
 	if err := easyjson.UnmarshalFromReader(r.Body, &req); err != nil {
-		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка парсинга JSON: %w", err), http.StatusBadRequest)
-		send_err.SendError(w, "ошибка парсинга JSON", http.StatusBadRequest)
+		logger.LogHandlerError(loggerVar, fmt.Errorf("error while parsing JSON: %w", err), http.StatusBadRequest)
+		send_err.SendError(w, "error while parsing JSON", http.StatusBadRequest)
 		return
 	}
 	req.Sanitize()
 
 	if req.Id == uuid.Nil {
-		logger.LogHandlerError(loggerVar, errors.New("не передан UUID"), http.StatusBadRequest)
-		send_err.SendError(w, "не передан UUID", http.StatusBadRequest)
+		logger.LogHandlerError(loggerVar, errors.New("UUID not provided"), http.StatusBadRequest)
+		send_err.SendError(w, "UUID not provided", http.StatusBadRequest)
 		return
 	}
 
 	if _, err := uuid.FromString(req.Id.String()); err != nil {
-		logger.LogHandlerError(loggerVar, fmt.Errorf("невалидный UUID: %w", err), http.StatusBadRequest)
-		send_err.SendError(w, "невалидный UUID", http.StatusBadRequest)
+		logger.LogHandlerError(loggerVar, fmt.Errorf("invalid UUID: %w", err), http.StatusBadRequest)
+		send_err.SendError(w, "invalid UUID", http.StatusBadRequest)
 		return
 	}
 
 	if !validation.IsValidCity(req.City) {
-		logger.LogHandlerError(loggerVar, errors.New("не валидый город"), http.StatusBadRequest)
-		send_err.SendError(w, "не валидый город", http.StatusBadRequest)
+		logger.LogHandlerError(loggerVar, errors.New("invalid city"), http.StatusBadRequest)
+		send_err.SendError(w, "invalid city", http.StatusBadRequest)
 	}
 
 	err := h.uc.CreatePvz(r.Context(), req)
 	if err != nil {
-		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка на уровне ниже (usecase): %w", err), http.StatusInternalServerError)
+		logger.LogHandlerError(loggerVar, fmt.Errorf("error on a level below (usecase): %w", err), http.StatusInternalServerError)
 		send_err.SendError(w, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -120,14 +120,14 @@ func (h *PvzHandler) GetPvz(w http.ResponseWriter, r *http.Request) {
 
 	pvz, err := h.uc.GetPvz(r.Context(), startDate, endDate, page, limit)
 	if err != nil {
-		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка на уровне ниже (usecase): %w", err), http.StatusInternalServerError)
+		logger.LogHandlerError(loggerVar, fmt.Errorf("error on a level below (usecase): %w", err), http.StatusInternalServerError)
 		send_err.SendError(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(pvz); err != nil {
-		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка формирования JSON: %w", err), http.StatusInternalServerError)
-		send_err.SendError(w, "ошибка формирования JSON", http.StatusInternalServerError)
+		logger.LogHandlerError(loggerVar, fmt.Errorf("error while forming JSON: %w", err), http.StatusInternalServerError)
+		send_err.SendError(w, "error while forming JSON", http.StatusInternalServerError)
 	}
 	logger.LogHandlerInfo(loggerVar, "Successful", http.StatusOK)
 }
@@ -138,8 +138,8 @@ func (h *PvzHandler) CreateReception(w http.ResponseWriter, r *http.Request) {
 	var req models.Reception
 
 	if err := easyjson.UnmarshalFromReader(r.Body, &req); err != nil {
-		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка парсинга JSON: %w", err), http.StatusBadRequest)
-		send_err.SendError(w, "ошибка парсинга JSON", http.StatusBadRequest)
+		logger.LogHandlerError(loggerVar, fmt.Errorf("error while parsing JSON: %w", err), http.StatusBadRequest)
+		send_err.SendError(w, "error while parsing JSON", http.StatusBadRequest)
 		return
 	}
 
@@ -159,8 +159,8 @@ func (h *PvzHandler) CreateReception(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(reception); err != nil {
-		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка формирования JSON: %w", err), http.StatusInternalServerError)
-		send_err.SendError(w, "ошибка формирования JSON", http.StatusInternalServerError)
+		logger.LogHandlerError(loggerVar, fmt.Errorf("error while forming JSON: %w", err), http.StatusInternalServerError)
+		send_err.SendError(w, "error while forming ответа", http.StatusInternalServerError)
 		return
 	}
 
@@ -178,8 +178,8 @@ func (h *PvzHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 	var req models.AddProductReq
 
 	if err := easyjson.UnmarshalFromReader(r.Body, &req); err != nil {
-		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка парсинга JSON: %w", err), http.StatusBadRequest)
-		send_err.SendError(w, "ошибка парсинга JSON", http.StatusBadRequest)
+		logger.LogHandlerError(loggerVar, fmt.Errorf("error while parsing JSON: %w", err), http.StatusBadRequest)
+		send_err.SendError(w, "error while parsing JSON", http.StatusBadRequest)
 		return
 	}
 
@@ -199,8 +199,8 @@ func (h *PvzHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(product); err != nil {
-		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка формирования JSON: %w", err), http.StatusInternalServerError)
-		send_err.SendError(w, "ошибка формирования JSON", http.StatusInternalServerError)
+		logger.LogHandlerError(loggerVar, fmt.Errorf("error while forming JSON: %w", err), http.StatusInternalServerError)
+		send_err.SendError(w, "error while forming ответа", http.StatusInternalServerError)
 		return
 	}
 
@@ -255,8 +255,8 @@ func (h *PvzHandler) CloseReception(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(reception); err != nil {
-		logger.LogHandlerError(loggerVar, fmt.Errorf("ошибка кодирования JSON: %w", err), http.StatusInternalServerError)
-		send_err.SendError(w, "ошибка формирования ответа", http.StatusInternalServerError)
+		logger.LogHandlerError(loggerVar, fmt.Errorf("error while forming JSON: %w", err), http.StatusInternalServerError)
+		send_err.SendError(w, "error while forming ответа", http.StatusInternalServerError)
 		return
 	}
 

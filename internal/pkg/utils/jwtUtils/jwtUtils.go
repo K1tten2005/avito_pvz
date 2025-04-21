@@ -32,7 +32,7 @@ func GetRoleFromJWT(JWTStr string, claims jwt.MapClaims, secret string) (string,
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		if secret == "" {
-			return nil, fmt.Errorf("JWT_SECRET не установлен")
+			return nil, fmt.Errorf("JWT_SECRET is not set")
 		}
 		return []byte(secret), nil
 	})

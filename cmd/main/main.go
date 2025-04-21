@@ -45,7 +45,7 @@ func initDB(logger *slog.Logger) (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
-	logger.Info("Успешное подключение к PostgreSQL")
+	logger.Info("Successful connection to PostgreSQL")
 	return pool, nil
 }
 
@@ -63,7 +63,7 @@ func main() {
 
 	pool, err := initDB(loggerVar)
 	if err != nil {
-		loggerVar.Error("Ошибка при подключении к PostgreSQL: " + err.Error())
+		loggerVar.Error("Error while connecting to PostgreSQL: " + err.Error())
 		return
 	}
 	defer pool.Close()
@@ -92,7 +92,7 @@ func main() {
 	r := mux.NewRouter()
 
 	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "Не найдено", http.StatusNotFound)
+		http.Error(w, "Not found", http.StatusNotFound)
 	})
 
 	r.PathPrefix("/metrics").Handler(promhttp.Handler())
@@ -143,7 +143,7 @@ func main() {
 	go func() {
 		err := srv.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
-			loggerVar.Error("Ошибка при запуске сервера: " + err.Error())
+			loggerVar.Error("Error while starting server: " + err.Error())
 		}
 	}()
 
@@ -151,15 +151,15 @@ func main() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	<-stop
-	loggerVar.Info("Получен сигнал остановки")
+	loggerVar.Info("Got stop signal")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	err = srv.Shutdown(ctx)
 	if err != nil {
-		loggerVar.Error("Ошибка при остановке сервера: " + err.Error())
+		loggerVar.Error("Error while stopping server: " + err.Error())
 	} else {
-		loggerVar.Info("Сервер успешно остановлен")
+		loggerVar.Info("Server successfully stopped")
 	}
 }
