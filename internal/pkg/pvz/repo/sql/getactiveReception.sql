@@ -1,1 +1,0 @@
-SELECT * FROM reception WHERE pvz_id = $1 AND status = 'in_progress' ORDER BY reception_time DESC LIMIT 1
